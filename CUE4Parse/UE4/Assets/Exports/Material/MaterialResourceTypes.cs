@@ -882,7 +882,11 @@ public class FMaterialScalarParameterInfo : FMaterialBaseParameterInfo
     public FMaterialScalarParameterInfo(FMemoryImageArchive Ar) : base(Ar)
     {
         DefaultValue = Ar.Read<float>();
-        Ar.Position = Ar.Position.Align(8);
+        // FMemoryImageMaterialParameterInfo is FName(8) + int32 Index + byte Association = 13,
+        // so the entry is Align(4) = 16 plus the float = 20 bytes. Roco Kingdom: World packs it
+        // that way; the stock Align(8) overshoots by 4 bytes per entry, and since ReadFName
+        // resolves names by position, every name past the first silently comes back as None.
+        Ar.Position = Ar.Position.Align(Ar.Game is GAME_RocoKingdomWorld ? 4 : 8);
     }
 }
 
