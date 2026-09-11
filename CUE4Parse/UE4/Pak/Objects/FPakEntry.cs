@@ -247,7 +247,9 @@ public class FPakEntry : VfsEntry
 
         // This should clear out any excess CompressionBlocks that may be valid in the user's passed in entry.
         var compressionBlocksCount = (bitfield >> 6) & 0xffff;
-        if (reader.Ar.Game == GAME_RocoKingdomWorld)
+        // ver12 stores the crypto strategy index in the top 6 bits of the block count field;
+        // in ver11 paks those bits are still part of the block count and must be left alone
+        if (reader.Ar.Game == GAME_RocoKingdomWorld && reader.Info.HasEncryptionStrategy)
         {
             var strategyIndex = compressionBlocksCount >> 10;
             compressionBlocksCount &= 0x3FF;
