@@ -84,6 +84,8 @@ public static class FConfigurableCrypto
     ];
     private static readonly FCryptoStrategy[] _strategies = FCryptoStrategy.CreateTable(_algorithms.Length, _keyMaterial.Length);
     private static ReadOnlySpan<byte> DerivationSeed => "NRC_CRYPTO_OBFUSCATION_SEED2026\x07"u8;
+    // Decrypt runs once per compression block; derive the static keys once instead of on every call
+    private static readonly byte[][] _derivedKeys = Array.ConvertAll(_keyMaterial, DeriveKey);
 
     private sealed class FConfigurableCryptoAlgorithmNotImplemented(string name) : IConfigurableCryptoAlgorithm
     {
@@ -153,7 +155,7 @@ public static class FConfigurableCrypto
         {
             { IsDefaultAesKey: true } => masterKey?.Key ?? throw new ArgumentNullException(nameof(masterKey)),
             { IsFileBasedKey: true } => fileName is not null ? DeriveFileNameKey(fileName) : throw new ArgumentNullException(nameof(fileName)),
-            _ => DeriveKey(_keyMaterial[strategy.KeyId - 1])
+            _ => _derivedKeys[strategy.KeyId - 1]
         };
     }
 

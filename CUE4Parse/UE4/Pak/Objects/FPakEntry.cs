@@ -145,6 +145,14 @@ public class FPakEntry : VfsEntry
 
         if (Ar.Game == GAME_TEKKEN7) Flags = (uint) (Flags & ~Flag_Encrypted);
 
+        // ver12 entries that cannot be bit-encoded (>= 1024 compression blocks) keep the crypto strategy
+        // index in the upper 6 bits of Flags instead of the block count field
+        if (Ar.Game == GAME_RocoKingdomWorld && reader.Info.HasEncryptionStrategy)
+        {
+            CustomData = (int) (Flags >> 2);
+            Flags &= Flag_Encrypted | Flag_Deleted;
+        }
+
         if (reader.Info.Version >= PakFile_Version_RelativeChunkOffsets)
         {
             // Convert relative compressed offsets to absolute
@@ -253,7 +261,9 @@ public class FPakEntry : VfsEntry
 
         // This should clear out any excess CompressionBlocks that may be valid in the user's passed in entry.
         var compressionBlocksCount = (bitfield >> 6) & 0xffff;
-        if (reader.Ar.Game == GAME_RocoKingdomWorld)
+        // ver12 stores the crypto strategy index in the top 6 bits of the block count field;
+        // in ver11 paks those bits are still part of the block count and must be left alone
+        if (reader.Ar.Game == GAME_RocoKingdomWorld && reader.Info.HasEncryptionStrategy)
         {
             var strategyIndex = compressionBlocksCount >> 10;
             compressionBlocksCount &= 0x3FF;
