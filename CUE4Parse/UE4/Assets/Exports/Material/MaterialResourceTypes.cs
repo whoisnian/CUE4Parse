@@ -1522,6 +1522,10 @@ public class FMaterialShaderMapId
     public ERHIFeatureLevel FeatureLevel;
     public FSHAHash? CookedShaderMapIdHash;
     public FPlatformTypeLayoutParameters? LayoutParams;
+    /// <summary>RocoKingdomWorld only: mesh LOD this resource was cooked for, or 0xffffffff for "any".</summary>
+    public uint LODUsed = uint.MaxValue;
+    /// <summary>RocoKingdomWorld only: bit mask of the material's dynamic switches.</summary>
+    public uint DynamicSwitchId;
 
     public FMaterialShaderMapId() {}
 
@@ -1541,8 +1545,15 @@ public class FMaterialShaderMapId
             if (Ar.Game is GAME_ArenaBreakoutInfinite or GAME_ArenaBreakoutMobile) Ar.Position += 4;
             if (Ar.Game is GAME_RocoKingdomWorld)
             {
+                // The two enums are written in the opposite order compared to stock UE.
                 (QualityLevel, FeatureLevel) = ((EMaterialQualityLevel) FeatureLevel, (ERHIFeatureLevel) QualityLevel);
-                Ar.Position += 16;
+                // Roco keys its cooked material resources by two extra fields. Without them the
+                // permutation that the game actually renders with cannot be told apart from the
+                // other resources of the same material, which all decode just fine.
+                Ar.Position += 4;
+                LODUsed = Ar.Read<uint>();
+                DynamicSwitchId = Ar.Read<uint>();
+                Ar.Position += 4;
             }
         }
         else if (Ar.Ver > EUnrealEngineObjectUE4Version.MATERIAL_QUALITY_LEVEL_SWITCH)
