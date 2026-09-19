@@ -201,6 +201,11 @@ namespace CUE4Parse_Conversion.Animations
                             nReadACLData(tracks.Handle, refPosePtr, trackToSkeletonMapPtr, atomKeysPtr);
                         }
                     }
+                    // `tracks` is not referenced after its Handle was read above, so the JIT may treat it as dead
+                    // and the GC can finalize it (freeing the native buffer) while nReadACLData is still decoding.
+                    // Symptom: every sample past some frame comes back as zeros (identity-less quaternions, zero
+                    // scale), or a segfault under heavy parallel load.
+                    GC.KeepAlive(tracks);
 
                     // Prepare buffers of all samples of each transform property for the native code to populate
                     var posKeys = new FVector[atomKeys.Length];
