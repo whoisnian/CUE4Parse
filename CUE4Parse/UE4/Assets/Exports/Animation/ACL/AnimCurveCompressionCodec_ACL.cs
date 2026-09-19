@@ -18,6 +18,9 @@ public class AnimCurveCompressionCodec_ACL : UAnimCurveCompressionCodec
         {
             nReadCurveACLData(compressedTracks.Handle, floatKeysPtr);
         }
+        // Keep the wrapper (and its native buffer) alive until the native decode has returned;
+        // otherwise its finalizer may free the buffer mid-decode. See AnimConverter.ConvertSequence.
+        GC.KeepAlive(compressedTracks);
 
         var floatCurves = new FFloatCurve[names.Length];
         for (var curveIndex = 0; curveIndex < floatCurves.Length; curveIndex++)
