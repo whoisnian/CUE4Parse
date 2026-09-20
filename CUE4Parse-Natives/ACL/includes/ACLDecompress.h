@@ -21,7 +21,12 @@ struct FCUE4ParseOutputWriter final : public acl::track_writer
         , NumSamples(inNumSamples)
     {}
 
-    static constexpr acl::default_sub_track_mode get_default_rotation_mode() { return bUseBindPose ? acl::default_sub_track_mode::variable : acl::default_sub_track_mode::constant; }
+    // A default *rotation* sub-track is the identity, never the bind pose: UE's ACL plugin only
+    // strips translation/scale against the reference pose. Filling default rotations with the
+    // reference pose turns a bone the clip parks at the identity into its (possibly 90-degree)
+    // reference rotation -- RocoKingdom Ill_DaiGui1_001 World_Idle Bone003 decoded lying flat
+    // while a device capture shows it upright; 107 of 660 forms in that game carry such tracks.
+    static constexpr acl::default_sub_track_mode get_default_rotation_mode() { return acl::default_sub_track_mode::constant; }
     static constexpr acl::default_sub_track_mode get_default_translation_mode() { return bUseBindPose ? acl::default_sub_track_mode::variable : acl::default_sub_track_mode::constant; }
     static constexpr acl::default_sub_track_mode get_default_scale_mode() { return bUseBindPose ? acl::default_sub_track_mode::variable : acl::default_sub_track_mode::legacy; }
 
