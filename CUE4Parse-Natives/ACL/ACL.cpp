@@ -14,6 +14,9 @@ DLLEXPORT void nTracksHeader_SetDefaultScale(acl::acl_impl::tracks_header* heade
 
 DLLEXPORT void nReadACLData(const acl::compressed_tracks& tracks, FTransform* inRefPoses, FTrackToSkeletonMap* inTrackToSkeletonMap, FTransform* outAtom)
 {
+    // Non-additive clips: default translation/scale sub-tracks are the bind pose (UE's ACL plugin
+    // strips those against the reference pose); default rotations are always the identity, see
+    // FCUE4ParseOutputWriter.
     if (tracks.get_default_scale() != 0)
     {
         ProcessTracks<true>(tracks, inRefPoses, inTrackToSkeletonMap, outAtom);
