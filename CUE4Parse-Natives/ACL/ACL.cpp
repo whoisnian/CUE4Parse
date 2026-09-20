@@ -14,7 +14,14 @@ DLLEXPORT void nTracksHeader_SetDefaultScale(acl::acl_impl::tracks_header* heade
 
 DLLEXPORT void nReadACLData(const acl::compressed_tracks& tracks, FTransform* inRefPoses, FTrackToSkeletonMap* inTrackToSkeletonMap, FTransform* outAtom)
 {
-    if (tracks.get_default_scale() != 0)
+    // Default sub-tracks are identity rotation, zero translation and the header's default scale,
+    // unless the encoder stripped them against the bind pose. UE's ACL plugin only does that on
+    // UE >= 5.1 (ACL_WITH_BIND_POSE_STRIPPING) for non-additive clips, so a default scale of one
+    // alone does not imply stripping; ACL's trivial-defaults flag tells the two apart. The flag was
+    // added partway through format v8, so older v8 clips leave it clear: an unset flag is only
+    // trusted from v9, and v8 clips keep the legacy defaults.
+    if (tracks.get_version() >= acl::compressed_tracks_version16::v02_01_99_1 &&
+        !tracks.has_trivial_default_values() && tracks.get_default_scale() != 0)
     {
         ProcessTracks<true>(tracks, inRefPoses, inTrackToSkeletonMap, outAtom);
     }

@@ -23,7 +23,9 @@ struct FCUE4ParseOutputWriter final : public acl::track_writer
 
     static constexpr acl::default_sub_track_mode get_default_rotation_mode() { return bUseBindPose ? acl::default_sub_track_mode::variable : acl::default_sub_track_mode::constant; }
     static constexpr acl::default_sub_track_mode get_default_translation_mode() { return bUseBindPose ? acl::default_sub_track_mode::variable : acl::default_sub_track_mode::constant; }
-    static constexpr acl::default_sub_track_mode get_default_scale_mode() { return bUseBindPose ? acl::default_sub_track_mode::variable : acl::default_sub_track_mode::legacy; }
+    // UE bind pose stripping supplies rotation/translation defaults, but always strips scale against
+    // one (StripBindPose in UE's ACL plugin), never the reference scale.
+    static constexpr acl::default_sub_track_mode get_default_scale_mode() { return acl::default_sub_track_mode::legacy; }
 
     RTM_FORCE_INLINE rtm::quatf RTM_SIMD_CALL get_variable_default_rotation(uint32_t trackIndex) const
     {
@@ -33,11 +35,6 @@ struct FCUE4ParseOutputWriter final : public acl::track_writer
     RTM_FORCE_INLINE rtm::vector4f RTM_SIMD_CALL get_variable_default_translation(uint32_t trackIndex) const
     {
         return UEVector3ToACL(RefPoses[TrackToBoneMapping[trackIndex].BoneTreeIndex].Translation);
-    }
-
-    RTM_FORCE_INLINE rtm::vector4f RTM_SIMD_CALL get_variable_default_scale(uint32_t trackIndex) const
-    {
-        return UEVector3ToACL(RefPoses[TrackToBoneMapping[trackIndex].BoneTreeIndex].Scale3D);
     }
 
     RTM_FORCE_INLINE void RTM_SIMD_CALL write_rotation(uint32_t trackIndex, rtm::quatf_arg0 rotation)
