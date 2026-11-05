@@ -40,6 +40,7 @@ public class UMaterialInstance : UMaterialInterface
             CachedData = new FStructFallback(Ar, "MaterialInstanceCachedData");
         }
 
+        var bReadInlineShaderMaps = false;
         if (bHasStaticPermutationResource)
         {
             if (Ar.Ver >= EUnrealEngineObjectUE4Version.PURGED_FMATERIAL_COMPILE_OUTPUTS)
@@ -61,6 +62,7 @@ public class UMaterialInstance : UMaterialInterface
                     try
                     {
                         DeserializeInlineShaderMaps(Ar);
+                        bReadInlineShaderMaps = true;
                     }
                     catch (Exception e)
                     {
@@ -99,7 +101,8 @@ public class UMaterialInstance : UMaterialInterface
             CustomGameData = Ar.ReadArray(() => new FStructFallback(Ar, "BHVRVariantConfigurator", FRawHeader.FullRead, ReadType.RAW));
         if (Ar.Game == GAME_Valorant && !bHasStaticPermutationResource)
             Ar.Position += 8; // 0.0f and 1.0f, for all
-        if (Ar.Game is GAME_RocoKingdomWorld && bHasStaticPermutationResource)
+        // Stored after the inline shader maps: unreachable when they were skipped (ReadShaderMaps off) or failed
+        if (Ar.Game is GAME_RocoKingdomWorld && bReadInlineShaderMaps)
         {
             // Additional DynamicSwitchParameters
             CustomGameData = Ar.ReadArray(() => new FRKWStaticSwitchParameter(Ar));
